@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 import bot
@@ -19,6 +20,11 @@ class ChatResponse(BaseModel):
     sesion_id: str
     respuesta: str
     sugerencias: list[str]
+
+
+@app.get("/")
+def inicio() -> FileResponse:
+    return FileResponse("index.html", media_type="text/html")
 
 
 @app.get("/health")

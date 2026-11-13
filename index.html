@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chatbot de Cocina 🍳</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #f4f1ea; height: 100vh; display: flex; flex-direction: column; }
+  header { background: #2e7d32; color: #fff; padding: 14px 20px; font-size: 1.1rem; font-weight: 600; }
+  #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 75%; padding: 10px 14px; border-radius: 14px; line-height: 1.45; white-space: pre-wrap; }
+  .usuario { align-self: flex-end; background: #2e7d32; color: #fff; border-bottom-right-radius: 4px; }
+  .bot { align-self: flex-start; background: #fff; border: 1px solid #ddd; border-bottom-left-radius: 4px; }
+  #sugerencias { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 10px; }
+  .chip { background: #fff; border: 1px solid #2e7d32; color: #2e7d32; border-radius: 16px; padding: 6px 12px; font-size: .85rem; cursor: pointer; }
+  form { display: flex; gap: 8px; padding: 12px 20px 20px; }
+  input { flex: 1; padding: 12px 14px; border: 1px solid #ccc; border-radius: 10px; font-size: 1rem; }
+  button { background: #2e7d32; color: #fff; border: none; border-radius: 10px; padding: 0 22px; font-size: 1rem; cursor: pointer; }
+  button:disabled { opacity: .5; }
+</style>
+</head>
+<body>
+<header>🍳 Chatbot de Cocina</header>
+<div id="chat"></div>
+<div id="sugerencias"></div>
+<form id="formulario">
+  <input id="entrada" placeholder="Pregúntame una receta… (ej. receta de paella)" autocomplete="off">
+  <button type="submit">Enviar</button>
+</form>
+<script>
+const chat = document.getElementById("chat");
+const entrada = document.getElementById("entrada");
+const formulario = document.getElementById("formulario");
+const sugerenciasDiv = document.getElementById("sugerencias");
+let sesionId = null;
+
+function anadir(texto, clase) {
+  const div = document.createElement("div");
+  div.className = "msg " + clase;
+  div.textContent = texto;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function pintarSugerencias(lista) {
+  sugerenciasDiv.innerHTML = "";
+  (lista || []).forEach(s => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = s;
+    b.onclick = () => { entrada.value = s; enviar(); };
+    sugerenciasDiv.appendChild(b);
+  });
+}
+
+async function enviar() {
+  const mensaje = entrada.value.trim();
+  if (!mensaje) return;
+  anadir(mensaje, "usuario");
+  entrada.value = "";
+  const boton = formulario.querySelector("button");
+  boton.disabled = true;
+  try {
+    const r = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensaje, sesion_id: sesionId })
+    });
+    const datos = await r.json();
+    sesionId = datos.sesion_id;
+    anadir(datos.respuesta, "bot");
+    pintarSugerencias(datos.sugerencias);
+  } catch (e) {
+    anadir("⚠️ No he podido conectar con el servidor. ¿Está arrancado con `uvicorn main:app`?", "bot");
+  }
+  boton.disabled = false;
+  entrada.focus();
+}
+
+formulario.onsubmit = e => { e.preventDefault(); enviar(); };
+anadir("¡Hola! Soy tu chef bot 👨‍🍳. Pregúntame por recetas, ingredientes, sustituciones o consejos de cocina.", "bot");
+pintarSugerencias([
+  "Receta de tortilla de patatas",
+  "¿Con qué sustituyo la nata?",
+  "¿Cuánto tarda la paella?",
+  "Dame un consejo de cocina"
+]);
+</script>
+</body>
+</html>

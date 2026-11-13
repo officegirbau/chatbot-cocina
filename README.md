@@ -9,10 +9,13 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
+Abre **http://localhost:8000/** en tu navegador: ahí tienes la interfaz de chat para hablar con el bot.
+
 ## Endpoints
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
+| `GET`  | `/` | Interfaz web de chat (para usar desde el navegador) |
 | `POST` | `/chat` | Enviar un mensaje y recibir la respuesta del bot |
 | `GET`  | `/recetas` | Lista todas las recetas disponibles |
 | `GET`  | `/recetas/{nombre}` | Detalle de una receta |
